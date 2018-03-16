@@ -1,3 +1,33 @@
+var Form = React.createClass({
+
+    handleSubmit: function(event) {
+        event.preventDefault();
+        var data = new FormData();
+        var imageData = event.target.image.files[0];
+        data.append("image", imageData);
+        fetch('/image', {
+            mode: 'no-cors',
+            method: "POST",
+            body: data
+        }).then(res => console.log)
+
+        console.log('handle submit function!');
+        console.log(event.target.image.files[0])
+    },
+
+    render: function() {
+        return (
+            <form onSubmit={this.handleSubmit}>
+                <div className="form-group">
+                    <label htmlFor="imageUpload">Email address</label>
+                    <input type="file" name="image" className="form-control" id="imageUpload" placeholder="Choose Image" />
+                </div>
+                <button type="submit" className="btn btn-primary">Submit</button>
+            </form>
+        )    
+    }
+})
+
 var App = React.createClass({
     render: function() {
         return (
@@ -8,14 +38,7 @@ var App = React.createClass({
                     </div>
                 </div>
                 <div className="row">
-                    <form>
-                        <div className="form-group">
-                            <label for="imageUpload">Email address</label>
-                            <input type="file" className="form-control" id="imageUpload" placeholder="Choose Image" />
-                            <input type="file" className="form-control" id="takePicture" placeholder="Take a picture" accept="image/*" capture="camera" />
-                        </div>
-                        <button type="submit" className="btn btn-primary">Submit</button>
-                    </form>
+                    <Form />
                 </div>
             </div>
         )
