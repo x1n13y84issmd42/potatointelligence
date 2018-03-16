@@ -3,3 +3,4 @@ __pycache__
 data/bottlenecks
 data/inception
 data/model
+.vscode

@@ -3,7 +3,7 @@ import json
 
 import numpy
 
-from flask import Flask, request
+from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
 from PI import PI
 
@@ -19,8 +19,8 @@ def allowed_image(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
-def hello_world():
-    return "Hello World!"
+def index():
+    return render_template('index.html')
 
 @app.route("/image", methods=['POST'])
 def image():
