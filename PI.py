@@ -26,8 +26,13 @@ class PI:
 			top_k = predictions[0].argsort()[-len(predictions[0]):][::-1]
 
 			dict = {}
+
+			print('self.label_lines', self.label_lines)
+			print('self.label_lines len', len(self.label_lines))
+			print('predictions len', len(predictions[0]))
 			
 			for node_id in top_k:
+				print('node_id', node_id)
 				human_string = self.label_lines[node_id]
 				score = predictions[0][node_id]
 				#print('%s (score = %.5f)' % (human_string, score))
