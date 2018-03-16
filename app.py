@@ -3,7 +3,7 @@ import json
 
 import numpy
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, Response
 from werkzeug.utils import secure_filename
 from PI import PI
 
@@ -27,7 +27,6 @@ def image():
     image = request.files['image'] 
     print('image filename', image.filename)
     if image and allowed_image(image.filename):
-        print(request.files['image'])
         filename = secure_filename(image.filename)
         image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         pi = PI("./data/retrained_labels.txt", "./data/retrained_graph.pb")
@@ -35,7 +34,8 @@ def image():
         for k in guesses:
             if isinstance(guesses[k], numpy.float32):
                 guesses[k] = float(guesses[k])
-        response = json.dumps(guesses)
+        response = Response(json.dumps(guesses))
+        response.headers["Content-Type"] = "application/json"
         return response
     else:
         return 'Error'
