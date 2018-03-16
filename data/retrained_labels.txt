@@ -1,0 +1,14 @@
+brocoli
+garlic
+cactus
+banana
+carrot
+corn
+onion
+bell pepper
+cabbage
+potato
+lettuce
+chili pepper
+cucumber
+tomato

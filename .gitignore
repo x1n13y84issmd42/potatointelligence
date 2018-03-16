@@ -3,5 +3,3 @@ __pycache__
 data/bottlenecks
 data/inception
 data/model
-data/retrained_graph.pb
-data/retrained_labels.txt
