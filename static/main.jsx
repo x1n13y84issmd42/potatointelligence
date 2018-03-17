@@ -74,8 +74,8 @@ var Form = React.createClass({
 								/>
 							</div>
 							<div className="col-sm-2">
-								<label htmlFor="numTiles">Grid Size</label>
-								<input type="number" name="numTiles" className="form-control" id="numTiles" />
+								<label htmlFor="numTiles">Details</label>
+								<input type="number" name="numTiles" className="form-control" id="numTiles" placeholder="2"/>
 							</div>
 						</div>
 						</div>
