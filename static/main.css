@@ -1,3 +1,28 @@
 .main-heading {
     text-align: center;
 }
+
+.inglist {
+    margin-top: 1rem;
+}
+
+.inglist a {
+    color: white;
+    background-color: #007bff;
+    border-radius: .25rem;
+    display: inline-block;
+    padding: .25rem;
+    font-size: 36px;
+    margin: 0 5px 5px 0;
+}
+
+#preview {
+    height: 200px;
+    overflow: hidden;
+}
+
+#previewImg {
+    position: relative;
+    width: 100%;
+    top: -50%;
+}

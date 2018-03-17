@@ -18,26 +18,187 @@ var RecipesData = React.createClass({
 	}
 });
 
+var Preview = React.createClass({
+	render: function() {
+		return (
+			<div className="row">
+				<div className="col-sm-12">
+				<div id="preview">
+					<img id="previewImg" src="" alt=""/>
+				</div>
+				</div>
+			</div>
+		)
+	}
+});
+
+var IngredientList = React.createClass({
+	render: function() {
+		var ingredients = [];
+		if (this.props.ingredients) {
+			for (var iI in this.props.ingredients) {
+				var ing = this.props.ingredients[iI];
+				var s = {zoom:ing.score};
+				ingredients.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s}>{ing.name} ({ing.score.toFixed(2)})</a>));
+			};
+
+			console.log(ingredients);
+		}
+		return (
+			<div className="row inglist">
+				<div className="col-sm-12">
+					{ingredients}
+				</div>
+			</div>
+		)
+	}
+});
 
 var Form = React.createClass({
 	render: function() {
 		return (
-			<div>
-				<div id="image-editor">
-					<img src="" alt="" id="placeholder"/>
-					<canvas id="canvas"></canvas>
+			<div className="row">
+				<div className="col-sm-12">
+					<form onSubmit={this.props.submitHandler}>
+						<div className="form-group">
+							<label htmlFor="imageUpload">Picture of your goods</label>
+							<input type="file" name="image" className="form-control" id="imageUpload" placeholder="Choose Image" />
+						</div>
+						<button type="submit" className="btn btn-primary">Submit</button>
+					</form>
 				</div>
-				<form onSubmit={this.props.submitHandler}>
-					<div className="form-group">
-						<label htmlFor="imageUpload">Email address</label>
-						<input type="file" name="image" className="form-control" id="imageUpload" placeholder="Choose Image" />
-					</div>
-					<button type="submit" className="btn btn-primary">Submit</button>
-				</form>
 			</div>
 		)    
 	}
 })
+
+const Data = {
+	ingredients: {
+		no: {
+			'51': 'Salt',
+			'78': 'Smør',
+			'61': 'Svart pepper',
+			'41': 'Hvetemel',
+			'38': 'Egg',
+			'40': 'Sukker (farin)',
+			'52': 'Vann',
+			'60': 'Olivenolje',
+			'28': 'Hvitløk',
+			'43': 'Kremfløte',
+			'27': 'Melk',
+			'108': 'Sitron',
+			'675': 'Løk',
+			'552': 'Råsukker',
+			'42': 'Bakepulver',
+			'174': 'Vaniljesukker',
+			'15': 'Gulrot',
+			'121': 'Sitronsaft',
+			'62': 'Potet',
+			'72': 'Rødløk',
+			'233': 'Crème fraîche',
+			'173': 'Melis',
+			'21': 'Paprika',
+			'185': 'Timian',
+			'186': 'Hvitost (Gulost)',
+			'140': 'Gjær',
+			'93': 'Eggeplomme',
+			'142': 'Sjalottløk',
+			'141': 'Tomat',
+			'17': 'Ingefær',
+			'190': 'Fløte',
+			'202': 'Mørk sjokolade',
+			'137': 'Eple',
+			'54': 'Honning',
+			'97': 'Basilikum',
+			'187': 'Kruspersille',
+			'204': 'Kakaopulver',
+			'193': 'Dill',
+			'68': 'Lime',
+			'172': 'Kremost',
+			'36': 'Vårløk',
+			'25': 'Rød chili',
+			'171': 'Bacon',
+			'57': 'Parmesan',
+			'59': 'Mandler',
+			'169': 'Yoghurt',
+			'336': 'Purreløk',
+			'44': 'Bringebær',
+			'46': 'Jordbær',
+			'227': 'Kanel',
+		},
+
+		en: {
+			'51': 'Salt',
+			'78': 'Butter',
+			'61': 'Black pepper',
+			'41': 'Flour',
+			'38': 'Egg',
+			'40': 'Sugar',
+			'52': 'Water',
+			'60': 'Olive oil',
+			'28': 'Garlic',
+			'43': 'Whipped cream',
+			'27': 'Milk',
+			'108': 'Lemon',
+			'675': 'Onion',
+			'552': 'Raw sugar',
+			'42': 'Baking powder',
+			'174': 'Vanilla sugar',
+			'15': 'Carrot',
+			'121': 'Lemon juice',
+			'62': 'Potato',
+			'72': 'Red onions',
+			'233': 'Crème fraîche',
+			'173': 'Melis',
+			'21': 'Paprika',
+			'185': 'Timian',
+			'186': 'White cheese (Gulost)',
+			'140': 'Yeast',
+			'93': 'Eggplomme',
+			'142': 'Shallot',
+			'141': 'Tomato',
+			'17': 'Ginger',
+			'190': 'Cream',
+			'202': 'Dark chocolate',
+			'137': 'Apples',
+			'54': 'Honey',
+			'97': 'Basilicum',
+			'187': 'Parsley',
+			'204': 'Cocoa powder',
+			'193': 'Dill',
+			'68': 'Lime',
+			'172': 'Cream cheese',
+			'36': 'Onions',
+			'25': 'Red chili',
+			'171': 'Bacon',
+			'57': 'Parmesan',
+			'59': 'Mandler',
+			'169': 'Yoghurt',
+			'336': 'Purr Search',
+			'44': 'Bringebær',
+			'46': 'Strawberries',
+			'227': 'Cinnamon',
+		}
+	}
+};
+
+function convertScores(scores) {
+	var res = [];
+
+	for (var sI in scores) {
+		res.push({
+			name: Data.ingredients.en[sI],
+			score: scores[sI],
+			id: sI
+		});
+	}
+
+	res.sort(function(a, b){
+		return b.score - a.score;
+	});
+
+	return res;
+}
 
 var App = React.createClass({
 	getInitialState: function() {
@@ -48,72 +209,19 @@ var App = React.createClass({
 		}
 	},
 
-	segmentImage: function(image, pcs) {
-	//	let img = document.createElement('img');
-		let img = document.getElementById('placeholder');
-		let canvas = document.getElementById('canvas');
-		let C = canvas.getContext('2d');
-		let fr = new FileReader();
-		let that = this;
-		fr.onload = function(e) {
-			img.src = e.target.result;
-		}
-		img.onload = function(e) {
-			let md = Math.min(img.width, img.height);
-			canvas.width = md;
-			canvas.height = md;
-			C.drawImage(img, md/2 - img.width/2, md/2 - img.height/2);
-			var tiles = that.prepareTiles(C, pcs);
-			that.postTiles(tiles);
-		}
-		fr.readAsDataURL(image);
-	},
-
-	prepareTiles(C, numTiles) {
-		var tiles = [];
-		var tileSize = Math.floor(C.canvas.width / numTiles);
-		var i = 0;
-		var editor = document.getElementById('image-editor');
-
-		for(var y=0; y<numTiles; y++) {
-			for(var x=0; x<numTiles; x++) {
-				var tileData = C.getImageData(x * tileSize, y * tileSize, tileSize, tileSize);
-				var tileCanvas = document.createElement('canvas');
-				tileCanvas.width = tileCanvas.height = tileSize;
-				tileCanvas.getContext('2d').putImageData(tileData, 0, 0);
-				editor.appendChild(tileCanvas);
-				tiles.push({
-					id: x+':'+y,
-					data: tileCanvas.toDataURL(),
-					size: tileSize
-				});
-			}
-		}
-
-		return tiles;
-	},
-
-	postTiles(tiles) {
-		for (var tile of tiles) {
-
-			var data = new FormData();
-			data.append("image", tile.data);
-			data.append("tileSize", tile.size);
-
-			fetch('/imagex', {
-			//	mode: 'no-cors',
-				method: "POST",
-				body: data
-			}).then(res => {
-				
-			});
-		}
-	},
-
 	parseImage: function(event) {
 		event.preventDefault();
 		var imageData = event.target.image.files[0];
-		//return this.segmentImage(imageData, 3);
+
+		this.setState({
+			image: imageData
+		})
+
+		var fr = new FileReader();
+		fr.onload = function () {
+			document.getElementById('previewImg').src = fr.result;
+		}
+		fr.readAsDataURL(imageData);
 		
 		var data = new FormData();
 		data.append("image", imageData);
@@ -137,7 +245,7 @@ var App = React.createClass({
 				}).catch(console.log)
 
 				this.setState({
-					ingredients: data
+					ingredients: convertScores(data)
 				})
 			}).catch(err => {
 				if(err) console.log(err)
@@ -153,9 +261,13 @@ var App = React.createClass({
 						<h1 className="main-heading text-primary">Recipe Search</h1>
 					</div>
 				</div>
-				<div className="row">
-					<Form submitHandler={this.parseImage} />
-				</div>
+
+				<Preview />
+
+				<Form submitHandler={this.parseImage} />
+
+				<IngredientList ingredients={this.state.ingredients}/>
+
 				<div className="row">
 					<RecipesData isLoading={this.isDataLoading}/>
 				</div>
