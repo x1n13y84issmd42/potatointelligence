@@ -55,13 +55,13 @@ def imagex():
 		accum = PredictionAccumulator()
 
 		tiles = makeTiles(image.stream, numTiles)
-		print('Got %d tiles' % len(tiles))
+		print('Got %d tiles.' % len(tiles))
 
 		for tile in tiles:
 			print('Examining tile %d/%d...' % (accum.len(), len(tiles)))
 			accum.add(pi.classifyBytes(tile))
 
-		print('Final scores')
+		print('Final scores:')
 		print(accum.getData())
 		response = Response(json.dumps(accum.getData()))
 		response.headers["Content-Type"] = "application/json"
@@ -70,19 +70,22 @@ def imagex():
 		return 'Error'
 
 def makeTiles(imageData, numTiles):
-	#	First, cropping the image to square shape
+	#	First, cropping the image to square shape.
 	image = Image.open(imageData)
 	md = min(image.size[0], image.size[1])
 	#image = image.crop((image.size[0]/2-md/2, image.size[1]/2-md/2, image.size[0]/2+md/2, image.size[1]/2+md/2))
 	#image.save('D:/rectImage.jpg', 'JPEG')
 
 	tileSize = floor(md / numTiles)
+	tileSizeX = floor(image.size[0] / numTiles)
+	tileSizeY = floor(image.size[1] / numTiles)
 	tiles = []
-	#	Then cutting the square image into numTiles*numTiles square tiles
-	#	They will be given to the classifier later, hope that will improve accuracy
+	#	Then cutting the square image into numTiles*numTiles square tiles.
+	#	They will be given to the classifier later, hope that will improve accuracy.
 	for y in range(0, numTiles):
 		for x in range(0, numTiles):
-			tileImage = image.crop((x*tileSize, y*tileSize, x*tileSize+tileSize, y*tileSize+tileSize))
+			tileImage = image.crop((x*tileSizeX, y*tileSizeY, x*tileSizeX+tileSizeX, y*tileSizeY+tileSizeY))
+			#tileImage = image.crop((x*tileSize, y*tileSize, x*tileSize+tileSize, y*tileSize+tileSize))
 			with BytesIO() as f:
 				tileImage.save(f, 'JPEG')
 				f.seek(0)
