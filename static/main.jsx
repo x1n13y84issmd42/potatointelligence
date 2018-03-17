@@ -34,6 +34,7 @@ var Preview = React.createClass({
 
 var IngredientList = React.createClass({
 	render: function() {
+
 		var ingredients = [];
 		if (this.props.ingredients) {
 			for (var iI in this.props.ingredients) {
@@ -41,9 +42,8 @@ var IngredientList = React.createClass({
 				var s = {zoom:ing.score};
 				ingredients.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s}>{ing.name} ({ing.score.toFixed(2)})</a>));
 			};
-
-			console.log(ingredients);
 		}
+
 		return (
 			<div className="row inglist">
 				<div className="col-sm-12">
@@ -58,11 +58,26 @@ var Form = React.createClass({
 	render: function() {
 		return (
 			<div className="row">
-				<div className="col-sm-12">
+			<div className="col-sm-12">
 					<form onSubmit={this.props.submitHandler}>
 						<div className="form-group">
-							<label htmlFor="imageUpload">Picture of your goods</label>
-							<input type="file" name="image" className="form-control" id="imageUpload" placeholder="Choose Image" />
+						<div className="row">
+							<div className="col-sm-10">
+								<label htmlFor="imageUpload">Picture of your goods</label>
+								<input
+									type="file"
+									name="image"
+									className="form-control"
+									id="imageUpload"
+									placeholder="Choose Image"
+									onChange={this.props.changeHandler}
+								/>
+							</div>
+							<div className="col-sm-2">
+								<label htmlFor="numTiles">Grid Size</label>
+								<input type="number" name="numTiles" className="form-control" id="numTiles" />
+							</div>
+						</div>
 						</div>
 						<button type="submit" className="btn btn-primary">Submit</button>
 					</form>
@@ -174,8 +189,8 @@ const Data = {
 			'57': 'Parmesan',
 			'59': 'Mandler',
 			'169': 'Yoghurt',
-			'336': 'Purr Search',
-			'44': 'Bringebær',
+			'336': 'Leek',
+			'44': 'Raspberry',
 			'46': 'Strawberries',
 			'227': 'Cinnamon',
 		}
@@ -209,6 +224,14 @@ var App = React.createClass({
 		}
 	},
 
+	onFileChange: function(event) {
+		var fr = new FileReader();
+		fr.onload = function () {
+			document.getElementById('previewImg').src = fr.result;
+		}
+		fr.readAsDataURL(event.target.files[0]);
+	},
+
 	parseImage: function(event) {
 		event.preventDefault();
 		var imageData = event.target.image.files[0];
@@ -217,14 +240,12 @@ var App = React.createClass({
 			image: imageData
 		})
 
-		var fr = new FileReader();
-		fr.onload = function () {
-			document.getElementById('previewImg').src = fr.result;
-		}
-		fr.readAsDataURL(imageData);
-		
+		var numTiles = ~~document.getElementById('numTiles').value;
+
 		var data = new FormData();
 		data.append("image", imageData);
+		data.append("numTiles", numTiles || 3);
+
 		fetch('/imagex', {
 			mode: 'no-cors',
 			method: "POST",
@@ -264,7 +285,7 @@ var App = React.createClass({
 
 				<Preview />
 
-				<Form submitHandler={this.parseImage} />
+				<Form submitHandler={this.parseImage} changeHandler={this.onFileChange}/>
 
 				<IngredientList ingredients={this.state.ingredients}/>
 

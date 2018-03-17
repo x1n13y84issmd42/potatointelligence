@@ -46,20 +46,23 @@ def image():
 
 @app.route("/imagex", methods=['POST'])
 def imagex():
-	image = request.files['image'] 
+	image = request.files['image']
+	numTiles = int(request.form['numTiles'])
 	if image and allowed_image(image.filename):
 
 		filename = secure_filename(image.filename)
 		pi = PI("./data/retrained_labels.txt", "./data/retrained_graph.pb")
 		accum = PredictionAccumulator()
 
-		tiles = makeTiles(image.stream, 3)
-		print('Got tiles', len(tiles))
+		tiles = makeTiles(image.stream, numTiles)
+		print('Got %d tiles' % len(tiles))
 
 		for tile in tiles:
+			print('Examining tile %d/%d...' % (accum.len(), len(tiles)))
 			accum.add(pi.classifyBytes(tile))
 
-		print('Final scores', accum.getData())
+		print('Final scores')
+		print(accum.getData())
 		response = Response(json.dumps(accum.getData()))
 		response.headers["Content-Type"] = "application/json"
 		return response
@@ -70,8 +73,9 @@ def makeTiles(imageData, numTiles):
 	#	First, cropping the image to square shape
 	image = Image.open(imageData)
 	md = min(image.size[0], image.size[1])
-	image = image.crop((image.size[0]/2-md/2, image.size[1]/2-md/2, image.size[0]/2+md/2, image.size[1]/2+md/2))
+	#image = image.crop((image.size[0]/2-md/2, image.size[1]/2-md/2, image.size[0]/2+md/2, image.size[1]/2+md/2))
 	#image.save('D:/rectImage.jpg', 'JPEG')
+
 	tileSize = floor(md / numTiles)
 	tiles = []
 	#	Then cutting the square image into numTiles*numTiles square tiles

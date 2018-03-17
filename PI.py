@@ -36,7 +36,6 @@ class PI:
 		return dict
 
 	def classifyBytes(self, image_data):
-		print('PI Classifier is working')
 		
 		with tf.Session() as sess:
 			# Feed the image_data as input to the graph and get first prediction
@@ -60,15 +59,18 @@ class PI:
 class PredictionAccumulator:
 	def __init__(self):
 		self.data = {}
+		self.length = 0
 
 	def add(self, guesses):
-		print('Adding guesses', guesses)
 		for k in guesses:
 			if k in self.data:
 				self.data[k] += float(guesses[k])
 			else:
 				self.data[k] = float(guesses[k])
+		self.length += 1
 
 	def getData(self):
 		return self.data
-		
+	
+	def len(self):
+		return self.length
