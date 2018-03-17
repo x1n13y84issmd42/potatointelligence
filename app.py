@@ -5,8 +5,12 @@ import numpy
 
 from flask import Flask, request, render_template, Response
 from werkzeug.utils import secure_filename
-from PI import PI
-
+from PI import PI, PredictionAccumulator
+from PIL import Image
+from io import BytesIO, StringIO
+import base64
+import re
+from math import floor
 
 UPLOAD_FOLDER = './uploads'
 ALLOWED_EXTENSIONS = set(['jpeg', 'jpg'])
@@ -15,31 +19,74 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_image(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+	return '.' in filename and \
+		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+	return render_template('index.html')
 
 @app.route("/image", methods=['POST'])
 def image():
-    image = request.files['image'] 
-    print('image filename', image.filename)
-    if image and allowed_image(image.filename):
-        filename = secure_filename(image.filename)
-        image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        pi = PI("./data/retrained_labels.txt", "./data/retrained_graph.pb")
-        guesses = pi.classify(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        for k in guesses:
-            if isinstance(guesses[k], numpy.float32):
-                guesses[k] = float(guesses[k])
-        response = Response(json.dumps(guesses))
-        response.headers["Content-Type"] = "application/json"
-        return response
-    else:
-        return 'Error'
+	image = request.files['image'] 
+	print('image filename', image.filename)
+	if image and allowed_image(image.filename):
+		filename = secure_filename(image.filename)
+		image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+		pi = PI("./data/retrained_labels.txt", "./data/retrained_graph.pb")
+		guesses = pi.classify(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+		for k in guesses:
+			if isinstance(guesses[k], numpy.float32):
+				guesses[k] = float(guesses[k])
+		response = Response(json.dumps(guesses))
+		response.headers["Content-Type"] = "application/json"
+		return response
+	else:
+		return 'Error'
+
+@app.route("/imagex", methods=['POST'])
+def imagex():
+	image = request.files['image'] 
+	if image and allowed_image(image.filename):
+
+		filename = secure_filename(image.filename)
+		pi = PI("./data/retrained_labels.txt", "./data/retrained_graph.pb")
+		accum = PredictionAccumulator()
+
+		tiles = makeTiles(image.stream, 3)
+		print('Got tiles', len(tiles))
+
+		for tile in tiles:
+			accum.add(pi.classifyBytes(tile))
+
+		print('Final scores', accum.getData())
+		response = Response(json.dumps(accum.getData()))
+		response.headers["Content-Type"] = "application/json"
+		return response
+	else:
+		return 'Error'
+
+def makeTiles(imageData, numTiles):
+	#	First, cropping the image to square shape
+	image = Image.open(imageData)
+	md = min(image.size[0], image.size[1])
+	image = image.crop((image.size[0]/2-md/2, image.size[1]/2-md/2, image.size[0]/2+md/2, image.size[1]/2+md/2))
+	#image.save('D:/rectImage.jpg', 'JPEG')
+	tileSize = floor(md / numTiles)
+	tiles = []
+	#	Then cutting the square image into numTiles*numTiles square tiles
+	#	They will be given to the classifier later, hope that will improve accuracy
+	for y in range(0, numTiles):
+		for x in range(0, numTiles):
+			tileImage = image.crop((x*tileSize, y*tileSize, x*tileSize+tileSize, y*tileSize+tileSize))
+			with BytesIO() as f:
+				tileImage.save(f, 'JPEG')
+				f.seek(0)
+				#print('BytesIO image', f.getvalue())
+				tiles.append(f.getvalue())
+	
+	return tiles
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+	app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
  
