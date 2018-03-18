@@ -11,6 +11,8 @@ from io import BytesIO, StringIO
 import base64
 import re
 from math import floor
+import urllib.request
+import json
 
 UPLOAD_FOLDER = './uploads'
 ALLOWED_EXTENSIONS = set(['jpeg', 'jpg'])
@@ -25,6 +27,22 @@ def allowed_image(filename):
 @app.route("/")
 def index():
 	return render_template('index.html')
+
+@app.route("/ingredients/<ingID>")
+def ingredient(ingID):
+	contents = urllib.request.urlopen("https://www.dagbladet.no/mat/api/ingredients/%d" % int(ingID))
+	contents = json.load(contents)
+	response = Response(json.dumps(contents))
+	response.headers["Content-Type"] = "application/json"
+	return response
+
+@app.route("/recipes/<ingID>")
+def recipes(ingID):
+	contents = urllib.request.urlopen("https://www.dagbladet.no/mat/api/recipes/%d" % int(ingID))
+	contents = json.load(contents)
+	response = Response(json.dumps(contents))
+	response.headers["Content-Type"] = "application/json"
+	return response
 
 @app.route("/image", methods=['POST'])
 def image():

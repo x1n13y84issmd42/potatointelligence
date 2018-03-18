@@ -1,3 +1,6 @@
+const INGREDIENT_SCORE_THRESHOLD = 0.6;
+const RECIPE_LIMIT = 20;
+
 var ProgressImage = React.createClass({
 	render: function() {
 		return (
@@ -23,15 +26,37 @@ var RecipesData = React.createClass({
 		
 		if (this.props.isLoading) {
 			return <div><TitleLine title="Looking for related recipes" /><ProgressImage /></div>
-		} else if (this.props.recipes) {
+		} else if (this.props.recipes && this.props.recipes.length) {
 			var contents = this.props.recipes.map((r) => {
+				var markupIngs = function(ings) {
+					var i = ings.map(i => (<li>{i.name || i.title}</li>));;
+					return (<ul>{i}</ul>)
+				};
+
+				var ingHave = markupIngs(r.ingredientsHave);
+				var ingBuy = markupIngs(r.ingredientsBuy);
+								
 				return (
-				<div class="row">
-					<div class="col-sm-6">
-						<a href="http://dagbladet.no/mat/oppskrifter"><img src={r.image} alt=""/></a>
+				<div className="row recipe" key={`recipe-${r.id}`}>
+					<div className="col-sm-6">
+						<a className="img" href={`https://www.dagbladet.no/mat/oppskrift/${r.slug}`}><img src={r.images[0].url_l_landscape} alt=""/></a>
 					</div>
-					<div class="col-sm-6">
-						<a href="http://dagbladet.no/mat/oppskrifter">{r.name}</a>
+					<div className="col-sm-6">
+						<div className="row title">
+							<h1 className="sc-EHOje gprTBr">
+								<a href={`https://www.dagbladet.no/mat/oppskrift/${r.slug}`}>{r.title}</a>
+							</h1>
+						</div>
+						<div className="row">
+							<div className="col-sm-6 ing-have">
+								<h2>You have:</h2>
+								{ingHave}
+							</div>
+							<div className="col-sm-6 ing-buy">
+								<h2>You need to add:</h2>
+								{ingBuy}
+							</div>
+						</div>
 					</div>
 				</div>
 				);
@@ -80,7 +105,7 @@ var IngredientList = React.createClass({
 				ingrs.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s} key={ing.id}>{ing.name}</a>));
 			};
 
-			ingrs.push((<div className="clear"></div>));
+			ingrs.push((<div className="clear" key="ing-end"></div>));
 
 			if (ingrs.length) {
 				ingredients = (<div><TitleLine title="Recognized ingredients" />{ingrs}</div>);
@@ -224,17 +249,17 @@ const Data = {
 			'202': 'Dark chocolate',
 			'137': 'Apples',
 			'54': 'Honey',
-			'97': 'Basilicum',
+			'97': 'Basil',
 			'187': 'Parsley',
 			'204': 'Cocoa powder',
 			'193': 'Dill',
 			'68': 'Lime',
 			'172': 'Cream cheese',
-			'36': 'Onions',
+			'36': 'Green Onions',
 			'25': 'Red chili',
 			'171': 'Bacon',
 			'57': 'Parmesan',
-			'59': 'Mandler',
+			'59': 'Almonds',
 			'169': 'Yoghurt',
 			'336': 'Leek',
 			'44': 'Raspberry',
@@ -259,7 +284,7 @@ function convertScores(scores) {
 		return b.score - a.score;
 	});
 
-	var topPerc = 0.6;
+	var topPerc = INGREDIENT_SCORE_THRESHOLD;
 	var threshold = res[res.length - 1].score + (res[0].score - res[res.length - 1].score) * (1.0 - topPerc);
 
 	res = res.filter((v) => {
@@ -288,36 +313,74 @@ var App = React.createClass({
 		fr.readAsDataURL(event.target.files[0]);
 	},
 
-	loadRecipes: function(ingredients) {
+	loadRecipes: function(recipeIDs, ingredients) {
+		var pRecipes = [];
+
+	 	recipeIDs = recipeIDs.slice(0, RECIPE_LIMIT);
+
+		for (var rID of recipeIDs) {
+			pRecipes.push(fetch(`/recipes/${rID}`, {mode: 'no-cors', method: "GET"}).then(resp => resp.json()));
+		}
+
+		Promise.all(pRecipes).then((recipes) => {
+			recipes = recipes.map(r => r.data);
+			for (var recipe of recipes) {
+				recipe.ingredientsHave = []
+				recipe.ingredientsBuy = []
+				for (var ingRecipe of recipe.ingredients) {
+					var ingFound = false;
+					for (var ingPI of this.state.ingredients) {
+						if (ingRecipe.id == ingPI.id) {
+							recipe.ingredientsHave.push(ingPI);
+							ingFound = true;
+						}
+					}
+
+					if (!ingFound) {
+						recipe.ingredientsBuy.push(ingRecipe);
+					}
+				}				
+				recipe.score = recipe.ingredientsHave.length / recipe.ingredients.length;
+			}
+			recipes.sort((a, b) => b.score - a.score);
+			console.log('RECIPES DONE', recipes);
+			this.setState({
+				recipes: recipes,
+				ingredients: ingredients,
+				recipesLoading: false
+			});
+		}).catch(err => {
+			console.log('RECIPES ERR', err);			
+		});
+	},
+
+	loadIngredients: function(ingredients) {
 		this.setState({
 			recipesLoading: true
 		});
 
-		var pRecipes = [];
+		var pIngs = [];
 
-		for (var ing of ingredients) {
-			console.log(`Fetching https://www.dagbladet.no/mat/api/ingredients/${ing.id}`);
-			pRecipes.push(fetch(`https://www.dagbladet.no/mat/api/ingredients/${ing.id}`, {mode: 'no-cors', method: "GET"}));
+		for (var iI in ingredients) {
+			pIngs.push(fetch(`/ingredients/${ingredients[iI].id}`, {mode: 'no-cors', method: "GET"}).then(resp => resp.json()));
 		}
 
-		
-		Promise.all(pRecipes).then((responses) => {
-			var jsons = [];
+		Promise.all(pIngs)
+			.then(ings => {
+				console.log('INGS DATA', ings);
+				var recipeIDs = {};
 
-			for (var resp of responses) {
-				resp.json().then(data => {
-					jsons.push(data);
-				}).catch(err => {
-					console.log('RESP err', err);
-				})
-			}
+				for (var iI in ings) {
+					for (var recipe of ings[iI].data.related_recipes) {
+						recipeIDs[recipe.id] = 1;
+					}
+				}
 
-			setTimeout(() => {
-				console.log('TIMEOUT', jsons)
-			}, 500);
-		}).catch(err => {
-			console.log('RECIPES err', err)
-		});
+				this.loadRecipes(Object.keys(recipeIDs), ingredients);
+			})
+			.catch(err => {
+				console.log('INGS ERR', err)
+			});
 	},
 
 	parseImage: function(event) {
@@ -344,12 +407,8 @@ var App = React.createClass({
 			this.setState({ingredientsLoading: false});
 
 			res.json().then(data => {
-				/* fetch(`https://www.dagbladet.no/mat/api/ingredients/15`, {mode: 'no-cors', method: "GET"}).then(res => {
-					console.log(res)
-				}).catch(console.log) */
-
 				var ingredients = convertScores(data);
-				this.loadRecipes(ingredients);
+				this.loadIngredients(ingredients);
 
 				this.setState({
 					ingredients: ingredients
@@ -375,7 +434,8 @@ var App = React.createClass({
 
 				<IngredientList isLoading={this.state.ingredientsLoading} ingredients={this.state.ingredients} />
 
-				<RecipesData isLoading={this.state.recipesLoading} ingredients={this.state.ingredients} />
+				<RecipesData isLoading={this.state.recipesLoading} recipes={this.state.recipes} />
+
 				<div id="preloadergif" className="hidden"></div>
 			</div>
 		)
