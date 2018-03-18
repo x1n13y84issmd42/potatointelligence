@@ -1,7 +1,11 @@
 var ProgressImage = React.createClass({
 	render: function() {
 		return (
-			<img src="/static/loading.gif" />
+			<div className="row">
+				<div className="col-sm-2 offset-sm-5">
+					<img src="/static/loading.gif" width="200" height="200" id="preloadergif"/>
+				</div>
+			</div>
 		)
 	}
 });
@@ -16,13 +20,34 @@ var TitleLine = React.createClass({
 
 var RecipesData = React.createClass({
 	render: function() {
-		return (
-			<div className="row">
-				<div className="col-sm-6 offset-sm-3">
-					{this.props.isLoading ? <ProgressImage /> : ''}
+		
+		if (this.props.isLoading) {
+			return <div><TitleLine title="Looking for related recipes" /><ProgressImage /></div>
+		} else if (this.props.recipes) {
+			var contents = this.props.recipes.map((r) => {
+				return (
+				<div class="row">
+					<div class="col-sm-6">
+						<a href="http://dagbladet.no/mat/oppskrifter"><img src={r.image} alt=""/></a>
+					</div>
+					<div class="col-sm-6">
+						<a href="http://dagbladet.no/mat/oppskrifter">{r.name}</a>
+					</div>
 				</div>
-			</div>
-		)
+				);
+			});
+
+			return (
+				<div className="row">
+					<div className="col-sm-12">
+						<TitleLine title="Related recipes" />
+						{contents}
+					</div>
+				</div>
+			)
+		}
+
+		return (<div className="row inglist"><div className="col-sm-12"></div></div>);
 	}
 });
 
@@ -31,7 +56,7 @@ var Preview = React.createClass({
 		return (
 			<div className="row">
 				<div className="col-sm-12">
-				<div id="preview">
+				<div id="preview" onClick={() => {document.getElementById('imageUpload').click()}}>
 					<img id="previewImg" src="" alt=""/>
 				</div>
 				</div>
@@ -42,27 +67,34 @@ var Preview = React.createClass({
 
 var IngredientList = React.createClass({
 	render: function() {
-
-		var ingredients = [];
-		if (this.props.ingredients) {
+		
+		if (this.props.isLoading) {
+			return <div><TitleLine title="Recognizing ingredients" /><ProgressImage /></div>
+		} else if (this.props.ingredients.length) {
+			var ingredients = '';
+			var ingrs = [];
 			for (var iI in this.props.ingredients) {
 				var ing = this.props.ingredients[iI];
-				var s = {zoom:ing.score};
-				ingredients.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s}>{ing.name} ({ing.score.toFixed(2)})</a>));
+				var s = {zoom:1/*ing.score*/};
+			//	ingrs.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s}>{ing.name} ({ing.score.toFixed(2)})</a>));
+				ingrs.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s} key={ing.id}>{ing.name}</a>));
 			};
-		}
 
-		if (ingredients.length) {
-			ingredients = (<div><TitleLine title="Recognized ingredients" /> {ingredients}</div>);
-		}
+			ingrs.push((<div className="clear"></div>));
 
-		return (
-			<div className="row inglist">
-				<div className="col-sm-12">
-					{ingredients}
+			if (ingrs.length) {
+				ingredients = (<div><TitleLine title="Recognized ingredients" />{ingrs}</div>);
+			}
+			return (
+				<div className="row inglist">
+					<div className="col-sm-12">
+						{ingredients}
+					</div>
 				</div>
-			</div>
-		)
+			)
+		}
+
+		return (<div className="row inglist"><div className="col-sm-12"></div></div>);
 	}
 });
 
@@ -73,25 +105,28 @@ var Form = React.createClass({
 			<div className="col-sm-12">
 					<form onSubmit={this.props.submitHandler}>
 						<div className="form-group">
-						<div className="row">
-							<div className="col-sm-10">
-								<label htmlFor="imageUpload">Picture of your goods</label>
-								<input
-									type="file"
-									name="image"
-									className="form-control"
-									id="imageUpload"
-									placeholder="Choose Image"
-									onChange={this.props.changeHandler}
-								/>
-							</div>
-							<div className="col-sm-2">
-								<label htmlFor="numTiles">Details</label>
-								<input type="number" name="numTiles" className="form-control" id="numTiles" placeholder="2"/>
+							<div className="row">
+								<div className="col-sm-8">
+									<label htmlFor="imageUpload">Picture of your goods</label>
+									<input
+										type="file"
+										name="image"
+										className="form-control"
+										id="imageUpload"
+										placeholder="Choose Image"
+										onChange={this.props.changeHandler}
+									/>
+								</div>
+								<div className="col-sm-2">
+									<label htmlFor="numTiles">Details</label>
+									<input type="number" name="numTiles" className="form-control" id="numTiles" placeholder="3"/>
+								</div>
+								<div className="col-sm-2">
+									<label></label>
+									<button type="submit" className="btn btn-primary">Submit</button>									
+								</div>
 							</div>
 						</div>
-						</div>
-						<button type="submit" className="btn btn-primary">Submit</button>
 					</form>
 				</div>
 			</div>
@@ -224,12 +259,21 @@ function convertScores(scores) {
 		return b.score - a.score;
 	});
 
+	var topPerc = 0.6;
+	var threshold = res[res.length - 1].score + (res[0].score - res[res.length - 1].score) * (1.0 - topPerc);
+
+	res = res.filter((v) => {
+		return v.score >= threshold;
+	});
+
 	return res;
 }
 
 var App = React.createClass({
 	getInitialState: function() {
 		return {
+			recipesLoading: false,
+			ingredientsLoading: false,
 			isDataLoading: false,
 			ingredients: [],
 			recipes: []
@@ -242,6 +286,38 @@ var App = React.createClass({
 			document.getElementById('previewImg').src = fr.result;
 		}
 		fr.readAsDataURL(event.target.files[0]);
+	},
+
+	loadRecipes: function(ingredients) {
+		this.setState({
+			recipesLoading: true
+		});
+
+		var pRecipes = [];
+
+		for (var ing of ingredients) {
+			console.log(`Fetching https://www.dagbladet.no/mat/api/ingredients/${ing.id}`);
+			pRecipes.push(fetch(`https://www.dagbladet.no/mat/api/ingredients/${ing.id}`, {mode: 'no-cors', method: "GET"}));
+		}
+
+		
+		Promise.all(pRecipes).then((responses) => {
+			var jsons = [];
+
+			for (var resp of responses) {
+				resp.json().then(data => {
+					jsons.push(data);
+				}).catch(err => {
+					console.log('RESP err', err);
+				})
+			}
+
+			setTimeout(() => {
+				console.log('TIMEOUT', jsons)
+			}, 500);
+		}).catch(err => {
+			console.log('RECIPES err', err)
+		});
 	},
 
 	parseImage: function(event) {
@@ -258,28 +334,26 @@ var App = React.createClass({
 		data.append("image", imageData);
 		data.append("numTiles", numTiles || 3);
 
+		this.setState({ingredientsLoading: true});
+
 		fetch('/imagex', {
 			mode: 'no-cors',
 			method: "POST",
 			body: data
 		}).then(res => {
+			this.setState({ingredientsLoading: false});
+
 			res.json().then(data => {
-				// var promises = []
-				
-				// for(var key in data) {
-				//     console.log('key: ', key);
-				//     promises.push(new Promise(fetch(`https://www.dagbladet.no/mat/api/ingredients/${key}`, {mode: 'no-cors', method: "POST"}).then(console.log)))
-				// }
-
-				//Promise.all(promises).then(console.log).catch(console.log);
-
-				fetch(`https://www.dagbladet.no/mat/api/ingredients/15`, {mode: 'no-cors', method: "GET"}).then(res => {
+				/* fetch(`https://www.dagbladet.no/mat/api/ingredients/15`, {mode: 'no-cors', method: "GET"}).then(res => {
 					console.log(res)
-				}).catch(console.log)
+				}).catch(console.log) */
+
+				var ingredients = convertScores(data);
+				this.loadRecipes(ingredients);
 
 				this.setState({
-					ingredients: convertScores(data)
-				})
+					ingredients: ingredients
+				});
 			}).catch(err => {
 				if(err) console.log(err)
 			})
@@ -297,13 +371,12 @@ var App = React.createClass({
 
 				<Preview />
 
-				<Form submitHandler={this.parseImage} changeHandler={this.onFileChange}/>
+				<Form submitHandler={this.parseImage} changeHandler={this.onFileChange} />
 
-				<IngredientList ingredients={this.state.ingredients}/>
+				<IngredientList isLoading={this.state.ingredientsLoading} ingredients={this.state.ingredients} />
 
-				<div className="row">
-					<RecipesData isLoading={this.isDataLoading}/>
-				</div>
+				<RecipesData isLoading={this.state.recipesLoading} ingredients={this.state.ingredients} />
+				<div id="preloadergif" className="hidden"></div>
 			</div>
 		)
 	}

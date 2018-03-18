@@ -1,5 +1,5 @@
 #root {
-    padding-top: 4.8rem;
+    padding-top: 2rem;
 }
 
 .main-heading {
@@ -15,8 +15,8 @@
     background-color: #007bff;
     border-radius: .25rem;
     display: inline-block;
-    padding: .25rem;
-    font-size: 36px;
+    padding: .5rem;
+    font-size: 24px;
     margin: 0 5px 5px 0;
 }
 
@@ -34,4 +34,24 @@
 
 .input {
     margin-top: 1rem;
+}
+
+.btn {
+    display: block;
+}
+
+#preloadergif {
+    background: url(/static/loading.gif) no-repeat -9999px -9999px;
+}
+
+.hidden {
+    display: none;
+}
+
+h1.mAYMh {
+    margin-top: 3rem;
+}
+
+.clear {
+    clear: both;
 }
