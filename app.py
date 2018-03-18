@@ -1,6 +1,6 @@
 import os
 import json
-
+import requests
 import numpy
 
 from flask import Flask, request, render_template, Response
@@ -25,6 +25,10 @@ def allowed_image(filename):
 @app.route("/")
 def index():
 	return render_template('index.html')
+
+@app.route("/proxy")
+def proxy():
+	return requests.get(request.args.get('src')).content
 
 @app.route("/image", methods=['POST'])
 def image():

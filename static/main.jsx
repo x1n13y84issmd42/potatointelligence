@@ -20,18 +20,17 @@ var TitleLine = React.createClass({
 
 var RecipesData = React.createClass({
 	render: function() {
-		
-		if (this.props.isLoading) {
+		if (!this.props.recipes) {
 			return <div><TitleLine title="Looking for related recipes" /><ProgressImage /></div>
 		} else if (this.props.recipes) {
 			var contents = this.props.recipes.map((r) => {
 				return (
-				<div class="row">
+				<div class="col-sm-4">
 					<div class="col-sm-6">
-						<a href="http://dagbladet.no/mat/oppskrifter"><img src={r.image} alt=""/></a>
+						<a href={r.url}><img src={r.images[0].url_m_landscape} alt=""/></a>
 					</div>
 					<div class="col-sm-6">
-						<a href="http://dagbladet.no/mat/oppskrifter">{r.name}</a>
+						<a href={r.url}>{r.title}</a>
 					</div>
 				</div>
 				);
@@ -41,7 +40,7 @@ var RecipesData = React.createClass({
 				<div className="row">
 					<div className="col-sm-12">
 						<TitleLine title="Related recipes" />
-						{contents}
+						<div className="row">{contents}</div>
 					</div>
 				</div>
 			)
@@ -123,7 +122,7 @@ var Form = React.createClass({
 								</div>
 								<div className="col-sm-2">
 									<label></label>
-									<button type="submit" className="btn btn-primary">Submit</button>									
+									<button type="submit" className="btn btn-primary">Submit</button>
 								</div>
 							</div>
 						</div>
@@ -296,25 +295,28 @@ var App = React.createClass({
 		var pRecipes = [];
 
 		for (var ing of ingredients) {
-			console.log(`Fetching https://www.dagbladet.no/mat/api/ingredients/${ing.id}`);
-			pRecipes.push(fetch(`https://www.dagbladet.no/mat/api/ingredients/${ing.id}`, {mode: 'no-cors', method: "GET"}));
+			console.log(`Fetching: ${ing.id}`);
+			pRecipes.push(fetch(`/proxy?src=https://www.dagbladet.no/mat/api/ingredients/${ing.id}`));
 		}
 
 		
 		Promise.all(pRecipes).then((responses) => {
-			var jsons = [];
-
 			for (var resp of responses) {
-				resp.json().then(data => {
-					jsons.push(data);
+				resp.json().then(res => {
+								if(res.data) {
+												var recipes = this.state.recipes;
+            var rr = res.data.related_recipes;
+												recipes.push(rr[0]);
+            recipes.push(rr[1]);
+            recipes.push(rr[2]);
+            this.setState({
+                recipes: recipes
+            });
+								}
 				}).catch(err => {
 					console.log('RESP err', err);
 				})
 			}
-
-			setTimeout(() => {
-				console.log('TIMEOUT', jsons)
-			}, 500);
 		}).catch(err => {
 			console.log('RECIPES err', err)
 		});
@@ -344,10 +346,6 @@ var App = React.createClass({
 			this.setState({ingredientsLoading: false});
 
 			res.json().then(data => {
-				/* fetch(`https://www.dagbladet.no/mat/api/ingredients/15`, {mode: 'no-cors', method: "GET"}).then(res => {
-					console.log(res)
-				}).catch(console.log) */
-
 				var ingredients = convertScores(data);
 				this.loadRecipes(ingredients);
 
@@ -362,26 +360,20 @@ var App = React.createClass({
 
 	render: function() {
 		return (
-			<div className="container">
-				<div className="row">
-					<div className="col-sm-12">
-						<TitleLine title="Recipe search" />
+				<div className="container">
+					<div className="row">
+						<div className="col-sm-12">
+							<TitleLine title="Recipe search" />
+						</div>
 					</div>
+					<Preview />
+					<Form submitHandler={this.parseImage} changeHandler={this.onFileChange} />
+					<IngredientList isLoading={this.state.ingredientsLoading} ingredients={this.state.ingredients} />
+					<RecipesData isLoading={this.state.recipesLoading} recipes={this.state.recipes} />
 				</div>
-
-				<Preview />
-
-				<Form submitHandler={this.parseImage} changeHandler={this.onFileChange} />
-
-				<IngredientList isLoading={this.state.ingredientsLoading} ingredients={this.state.ingredients} />
-
-				<RecipesData isLoading={this.state.recipesLoading} ingredients={this.state.ingredients} />
-				<div id="preloadergif" className="hidden"></div>
-			</div>
 		)
 	}
-})
-
+});
 
 ReactDOM.render(
 	<App />,
