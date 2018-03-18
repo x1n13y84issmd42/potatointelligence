@@ -6,6 +6,14 @@ var ProgressImage = React.createClass({
 	}
 });
 
+var TitleLine = React.createClass({
+	render: function() {
+		return (
+			<h1 className="sc-VigVT mAYMh">{this.props.title}</h1>
+		)
+	}
+});
+
 var RecipesData = React.createClass({
 	render: function() {
 		return (
@@ -42,6 +50,10 @@ var IngredientList = React.createClass({
 				var s = {zoom:ing.score};
 				ingredients.push((<a href={'https://www.dagbladet.no/mat/ingrediens/' + ing.id} style={s}>{ing.name} ({ing.score.toFixed(2)})</a>));
 			};
+		}
+
+		if (ingredients.length) {
+			ingredients = (<div><TitleLine title="Recognized ingredients" /> {ingredients}</div>);
 		}
 
 		return (
@@ -279,7 +291,7 @@ var App = React.createClass({
 			<div className="container">
 				<div className="row">
 					<div className="col-sm-12">
-						<h1 className="main-heading text-primary">Recipe Search</h1>
+						<TitleLine title="Recipe search" />
 					</div>
 				</div>
 
