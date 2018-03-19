@@ -308,7 +308,11 @@ var App = React.createClass({
 	onFileChange: function(event) {
 		var fr = new FileReader();
 		fr.onload = function () {
-			document.getElementById('previewImg').src = fr.result;
+			var img = document.getElementById('previewImg');
+			img.onload = function() {
+				img.style.marginTop = '-' + (img.width / 4) + 'px';
+			}
+			img.src = fr.result;
 		}
 		fr.readAsDataURL(event.target.files[0]);
 	},
@@ -424,7 +428,7 @@ var App = React.createClass({
 			<div className="container">
 				<div className="row">
 					<div className="col-sm-12">
-						<TitleLine title="Recipe search" />
+						<TitleLine title="Potato Intelligence Recipe Search" />
 					</div>
 				</div>
 
